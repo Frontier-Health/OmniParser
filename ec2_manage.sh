@@ -251,7 +251,7 @@ cmd_start() {
     _wait_for_state "$instance_id" "running"
     IP=$(_get_instance_ip "$instance_id")
     echo "Instance running at $IP"
-    echo "API will be available at http://${IP}:8000/probe/"
+    echo "API will be available at http://${IP}:8000/health/"
 }
 
 cmd_stop() {
@@ -376,7 +376,7 @@ docker compose -f docker-compose.gpu.yml up --build -d
 
 echo "Waiting for server to be ready..."
 for i in \$(seq 1 30); do
-    if curl -sf http://localhost:8000/probe/ > /dev/null 2>&1; then
+    if curl -sf http://localhost:8000/health/ > /dev/null 2>&1; then
         echo "OmniParser server is ready!"
         exit 0
     fi
@@ -389,7 +389,7 @@ REMOTE
     echo "========================================"
     echo " Deploy complete!"
     echo " API endpoint: http://${IP}:8000"
-    echo " Health check: curl http://${IP}:8000/probe/"
+    echo " Health check: curl http://${IP}:8000/health/"
     echo " Parse:        curl -X POST http://${IP}:8000/parse/ -H 'Content-Type: application/json' -d '{\"base64_image\": \"...\"}'"
     echo "========================================"
 }
