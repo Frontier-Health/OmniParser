@@ -14,7 +14,7 @@ import json
 import os
 import threading
 import webbrowser
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import boto3
 
@@ -207,7 +207,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", mime)
         self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "max-age=3600")
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(data)
 
@@ -218,8 +218,14 @@ class RequestHandler(BaseHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description="Browse S3 images in your browser")
     parser.add_argument("prefix", help="S3 key prefix to list images from")
-    parser.add_argument("--bucket", default=os.environ.get("S3_BUCKET"), help="S3 bucket name (default: $S3_BUCKET)")
-    parser.add_argument("--port", type=int, default=8787, help="Local port (default: 8787)")
+    parser.add_argument(
+        "--bucket",
+        default=os.environ.get("S3_BUCKET"),
+        help="S3 bucket name (default: $S3_BUCKET)",
+    )
+    parser.add_argument(
+        "--port", type=int, default=8787, help="Local port (default: 8787)"
+    )
     args = parser.parse_args()
 
     if not args.bucket:
@@ -233,14 +239,18 @@ def main():
         print("No images found at that prefix.")
         return
 
-    print(f"Found {len(keys)} image(s). Starting server on http://localhost:{args.port}")
+    print(
+        f"Found {len(keys)} image(s). Starting server on http://localhost:{args.port}"
+    )
 
     RequestHandler.s3_client = s3
     RequestHandler.bucket = args.bucket
     RequestHandler.image_keys = keys
 
     server = HTTPServer(("127.0.0.1", args.port), RequestHandler)
-    threading.Timer(0.5, lambda: webbrowser.open(f"http://localhost:{args.port}")).start()
+    threading.Timer(
+        0.5, lambda: webbrowser.open(f"http://localhost:{args.port}")
+    ).start()
 
     try:
         server.serve_forever()
